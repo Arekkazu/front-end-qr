@@ -48,7 +48,7 @@
   <script src="/js/config.js"></script>
   <script src="/js/api.js"></script>
   <script>
-    // Redirigir si ya está autenticado
+    document.addEventListener("DOMContentLoaded", () => {
     const user = getUser();
     if (user && localStorage.getItem("token")) {
       window.location.href = user.role === "Admin" ? "/admin/dashboard.html" : "/user/dashboard.html";
@@ -74,6 +74,7 @@
         alert.classList.remove("d-none");
       }
     });
+    }); // DOMContentLoaded
   </script>
 </body>
 </html>
