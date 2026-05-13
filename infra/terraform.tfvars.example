@@ -1,0 +1,8 @@
+project_name  = "qr-frontend"
+aws_region    = "us-east-1"
+instance_type = "t2.micro"
+ssh_key_name  = "test-qrflask"          # mismo key pair que el backend
+ssh_cidr      = "TU_IP_PUBLICA/32"
+repo_url      = "https://github.com/Arekkazu/front-end-qr.git"
+repo_branch   = "deploy"
+api_base_url  = "http://IP_PUBLICA_BACKEND:5000"  # completar tras desplegar el backend

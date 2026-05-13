@@ -1,0 +1,53 @@
+#!/bin/bash
+set -eux
+
+dnf update -y
+dnf install -y git nginx
+
+REPO_URL="${repo_url}"
+REPO_BRANCH="${repo_branch}"
+WEB_ROOT="/usr/share/nginx/html"
+API_BASE="${api_base_url}"
+
+# Clonar o actualizar el repo
+if [ ! -d /opt/front-end-qr/.git ]; then
+  git clone --branch "$REPO_BRANCH" "$REPO_URL" /opt/front-end-qr
+else
+  cd /opt/front-end-qr
+  git fetch origin
+  git checkout "$REPO_BRANCH"
+  git pull origin "$REPO_BRANCH"
+fi
+
+# Copiar archivos estáticos al directorio de Nginx
+rm -rf "$WEB_ROOT"/*
+cp -r /opt/front-end-qr/index.html /opt/front-end-qr/js /opt/front-end-qr/user /opt/front-end-qr/admin "$WEB_ROOT"/
+
+# Inyectar la URL del backend en un archivo de configuración JS
+cat > "$WEB_ROOT/js/config.js" <<EOF
+window.API_BASE = "$API_BASE";
+EOF
+
+# Configurar Nginx: servir SPA con fallback a index.html
+cat > /etc/nginx/conf.d/qr-frontend.conf <<'NGINX'
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~* \.(js|css|png|jpg|ico|svg)$ {
+        expires 1d;
+        add_header Cache-Control "public";
+    }
+}
+NGINX
+
+# Deshabilitar el server block por defecto
+rm -f /etc/nginx/conf.d/default.conf
+
+systemctl enable nginx
+systemctl restart nginx

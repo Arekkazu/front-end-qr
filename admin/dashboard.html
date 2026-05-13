@@ -1,256 +1,173 @@
-{% extends "base.html" %} {% block content %}
-<div class="row mb-4">
-    <div class="col-md-6">
-        <h1 class="display-4">
-            <i class="fas fa-tachometer-alt me-2"></i>Panel de Administración
-        </h1>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>body { background-color: #f8f9fa; padding-top: 70px; }</style>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3><i class="fas fa-users me-2 text-primary"></i>Gestión de Usuarios</h3>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="fas fa-plus me-2"></i>Nuevo Usuario
+      </button>
     </div>
-    <div class="col-md-6 text-end">
-        <button
-            class="btn btn-success"
-            data-bs-toggle="modal"
-            data-bs-target="#addUserModal"
-        >
-            <i class="fas fa-plus me-2"></i>Agregar Usuario
-        </button>
+    <div id="alert" class="alert d-none"></div>
+    <div class="card shadow border-0">
+      <div class="card-body">
+        <table class="table table-hover mb-0">
+          <thead class="table-primary">
+            <tr><th>ID</th><th>Usuario</th><th>Rol</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="4" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-</div>
+  </main>
 
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <h3 class="h5 mb-0">
-            <i class="fas fa-users me-2"></i>Gestión de Usuarios
-        </h3>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.id }}</td>
-                        <td>{{ user.username }}</td>
-                        <td>
-                            <span
-                                class="badge bg-{{ 'success' if user.role.name == 'Admin' else 'info' }}"
-                            >
-                                {{ user.role.name }}
-                            </span>
-                        </td>
-                        <td>
-                            <button
-                                class="btn btn-sm btn-warning edit-user"
-                                data-id="{{ user.id }}"
-                                data-username="{{ user.username }}"
-                                data-role="{{ user.role.name }}"
-                            >
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button
-                                class="btn btn-sm btn-danger delete-user"
-                                data-id="{{ user.id }}"
-                            >
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para agregar usuario -->
-<div class="modal fade" id="addUserModal" tabindex="-1">
+  <!-- Modal Agregar -->
+  <div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ url_for('admin.add_user') }}">
-                <div class="modal-header">
-                    <h5 class="modal-title">Agregar Nuevo Usuario</h5>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                    ></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Nombre de Usuario</label>
-                        <input
-                            type="text"
-                            name="username"
-                            class="form-control"
-                            required
-                        />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Contraseña</label>
-                        <input
-                            type="password"
-                            name="password"
-                            class="form-control"
-                            required
-                        />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Rol</label>
-                        <select name="role" class="form-select" required>
-                            <option value="User">Usuario</option>
-                            <option value="Admin">Administrador</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Crear Usuario
-                    </button>
-                </div>
-            </form>
-        </div>
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Nuevo Usuario</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="addForm">
+          <div class="modal-body">
+            <div class="mb-3"><label class="form-label">Usuario</label><input type="text" class="form-control" name="username" required /></div>
+            <div class="mb-3"><label class="form-label">Contraseña</label><input type="password" class="form-control" name="password" required /></div>
+            <div class="mb-3">
+              <label class="form-label">Rol</label>
+              <select class="form-select" name="role">
+                <option value="User">User</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Crear</button>
+          </div>
+        </form>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Modal para editar usuario -->
-<div class="modal fade" id="editUserModal" tabindex="-1">
+  <!-- Modal Editar -->
+  <div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ url_for('admin.edit_user') }}">
-                <input type="hidden" name="user_id" id="editUserId" />
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Usuario</h5>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                    ></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Nombre de Usuario</label>
-                        <input
-                            type="text"
-                            name="username"
-                            id="editUsername"
-                            class="form-control"
-                            required
-                        />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"
-                            >Contraseña (dejar vacío para no cambiar)</label
-                        >
-                        <input
-                            type="password"
-                            name="password"
-                            class="form-control"
-                        />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Rol</label>
-                        <select
-                            name="role"
-                            id="editRole"
-                            class="form-select"
-                            required
-                        >
-                            <option value="User">Usuario</option>
-                            <option value="Admin">Administrador</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-warning">
-                        Actualizar Usuario
-                    </button>
-                </div>
-            </form>
-        </div>
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Editar Usuario</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="editForm">
+          <input type="hidden" id="editId" />
+          <div class="modal-body">
+            <div class="mb-3"><label class="form-label">Usuario</label><input type="text" class="form-control" id="editUsername" required /></div>
+            <div class="mb-3"><label class="form-label">Nueva contraseña <span class="text-muted">(opcional)</span></label><input type="password" class="form-control" id="editPassword" /></div>
+            <div class="mb-3">
+              <label class="form-label">Rol</label>
+              <select class="form-select" id="editRole">
+                <option value="User">User</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Modal para eliminar usuario -->
-<div class="modal fade" id="deleteUserModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ url_for('admin.delete_user') }}">
-                <input type="hidden" name="user_id" id="deleteUserId" />
-                <div class="modal-header">
-                    <h5 class="modal-title text-danger">Eliminar Usuario</h5>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                    ></button>
-                </div>
-                <div class="modal-body">
-                    <p>
-                        ¿Está seguro de eliminar este usuario? Esta acción no se
-                        puede deshacer.
-                    </p>
-                    <p class="fw-bold text-danger">
-                        ¡Esta acción eliminará permanentemente el usuario!
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-danger">
-                        Eliminar Usuario
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+  <script src="/js/config.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    if (!requireAuth("Admin")) throw new Error("not auth");
+    renderNavbar("admin-dashboard");
 
-{% block scripts %}
-<script>
-    $(document).ready(function () {
-        // Editar usuario
-        $(".edit-user").click(function () {
-            const id = $(this).data("id");
-            const username = $(this).data("username");
-            const role = $(this).data("role");
+    const alertEl = document.getElementById("alert");
+    function showAlert(msg, type = "danger") {
+      alertEl.textContent = msg;
+      alertEl.className = `alert alert-${type}`;
+      setTimeout(() => alertEl.className = "alert d-none", 4000);
+    }
 
-            $("#editUserId").val(id);
-            $("#editUsername").val(username);
-            $("#editRole").val(role);
-            $("#editUserModal").modal("show");
-        });
+    async function loadUsers() {
+      const users = await apiFetch("/api/admin/dashboard").catch(err => {
+        if (err.status === 401) logout();
+        return [];
+      });
+      document.getElementById("tbody").innerHTML = users.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.username}</td>
+          <td><span class="badge bg-${u.role === 'Admin' ? 'danger' : 'secondary'}">${u.role}</span></td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="openEdit(${u.id},'${u.username}','${u.role}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>`).join("");
+    }
 
-        // Eliminar usuario
-        $(".delete-user").click(function () {
-            $("#deleteUserId").val($(this).data("id"));
-            $("#deleteUserModal").modal("show");
-        });
+    function openEdit(id, username, role) {
+      document.getElementById("editId").value = id;
+      document.getElementById("editUsername").value = username;
+      document.getElementById("editRole").value = role;
+      document.getElementById("editPassword").value = "";
+      new bootstrap.Modal(document.getElementById("editModal")).show();
+    }
+
+    async function deleteUser(id) {
+      if (!confirm("¿Eliminar este usuario?")) return;
+      try {
+        await apiFetch(`/api/admin/users/${id}`, { method: "DELETE" });
+        showAlert("Usuario eliminado", "success");
+        loadUsers();
+      } catch (err) { showAlert(err.message); }
+    }
+
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      try {
+        await apiFetch("/api/admin/users", { method: "POST", body: JSON.stringify(Object.fromEntries(fd)) });
+        bootstrap.Modal.getInstance(document.getElementById("addModal")).hide();
+        e.target.reset();
+        showAlert("Usuario creado", "success");
+        loadUsers();
+      } catch (err) { showAlert(err.message); }
     });
-</script>
-{% endblock %} {% endblock %}
+
+    document.getElementById("editForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("editId").value;
+      const body = {
+        username: document.getElementById("editUsername").value,
+        role: document.getElementById("editRole").value,
+      };
+      const pw = document.getElementById("editPassword").value;
+      if (pw) body.password = pw;
+      try {
+        await apiFetch(`/api/admin/users/${id}`, { method: "PUT", body: JSON.stringify(body) });
+        bootstrap.Modal.getInstance(document.getElementById("editModal")).hide();
+        showAlert("Usuario actualizado", "success");
+        loadUsers();
+      } catch (err) { showAlert(err.message); }
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>

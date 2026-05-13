@@ -1,189 +1,73 @@
-{% extends "base.html" %} {% block head %}
-<style>
-    .qr-container {
-        background: white;
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        text-align: center;
-        margin: 30px auto;
-        max-width: 350px;
-        position: relative;
-        overflow: hidden;
-        border: 2px solid #0d6efd;
-    }
-    .qr-container::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-            45deg,
-            transparent 33%,
-            rgba(13, 110, 253, 0.1) 50%,
-            transparent 66%
-        );
-        transform: rotate(45deg);
-        animation: scan 3s linear infinite;
-    }
-    @keyframes scan {
-        0% {
-            top: -50%;
-        }
-        100% {
-            top: 150%;
-        }
-    }
-    .qr-image {
-        max-width: 100%;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    .countdown {
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #dc3545;
-        margin-top: 15px;
-    }
-    .qr-info {
-        background: #e3f2fd;
-        border-radius: 10px;
-        padding: 15px;
-        margin-top: 20px;
-        text-align: left;
-    }
-    .qr-info p {
-        margin-bottom: 5px;
-    }
-</style>
-{% endblock %} {% block content %}
-<div class="row justify-content-center mb-4">
-    <div class="col-md-8 text-center">
-        <h1 class="display-4">
-            <i class="fas fa-user me-2"></i>Bienvenido, {{ user.username }}!
-        </h1>
-        <p class="lead text-muted">Tu código QR para registro de asistencia</p>
-    </div>
-</div>
-
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="qr-container">
-            <h2 class="mb-3"><i class="fas fa-qrcode me-2"></i>Tu Código QR</h2>
-            <img
-                src="data:image/png;base64,{{ qr_img }}"
-                class="qr-image"
-                alt="QR Code"
-            />
-            <p class="countdown" id="countdown">
-                Actualizando en: <span id="timer">60</span> segundos
-            </p>
-
-            <div class="qr-info mt-4">
-                <p>
-                    <i class="fas fa-info-circle me-2 text-primary"></i>Este
-                    código se actualiza cada minuto
-                </p>
-                <p>
-                    <i class="fas fa-shield-alt me-2 text-success"></i>Seguro y
-                    único para tu sesión
-                </p>
-                <p>
-                    <i class="fas fa-clock me-2 text-warning"></i>Válido solo
-                    por 60 segundos
-                </p>
-            </div>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { background-color: #f8f9fa; padding-top: 70px; }
+    .qr-container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,.1); text-align: center; max-width: 300px; margin: 20px auto; }
+    .qr-image { max-width: 100%; border: 2px solid #0d6efd; border-radius: 10px; }
+    .countdown { font-weight: bold; color: #dc3545; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <main class="container py-4">
+    <div id="alert" class="alert alert-danger d-none"></div>
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h3 class="mb-4"><i class="fas fa-qrcode me-2 text-primary"></i>Mi Código QR</h3>
+        <div class="qr-container" id="qrBox">
+          <div class="spinner-border text-primary" role="status"></div>
         </div>
-    </div>
-</div>
-
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h3 class="h5 mb-0">
-                    <i class="fas fa-history me-2"></i>Mis Registros de
-                    Asistencia
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>{{ now.strftime('%Y-%m-%d') }}</td>
-                                <td>{{ now.strftime('%H:%M') }}</td>
-                                <td>
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i
-                                        >Registrado hoy
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2023-10-15</td>
-                                <td>08:30</td>
-                                <td>
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i
-                                        >Registrado
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2023-10-14</td>
-                                <td>08:45</td>
-                                <td>
-                                    <span class="badge bg-warning">
-                                        <i class="fas fa-clock me-1"></i>Tarde
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="text-center mt-3">
+          <button class="btn btn-outline-primary" id="refreshBtn">
+            <i class="fas fa-sync-alt me-2"></i>Renovar QR
+          </button>
         </div>
+      </div>
     </div>
-</div>
-{% endblock %} {% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        let timeLeft = {{ QR_EXPIRATION }};
-        const timerElement = document.getElementById('timer');
-        const countdownElement = document.getElementById('countdown');
+  </main>
 
-        // Actualizar contador
-        const countdown = setInterval(() => {
-            timeLeft--;
-            timerElement.textContent = timeLeft;
+  <script src="/js/config.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error("not auth");
+    renderNavbar("user-dashboard");
 
-            if (timeLeft <= 10) {
-                countdownElement.classList.add('text-danger');
-            }
+    let countdownInterval;
 
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                location.reload(); // Recargar la página para obtener un nuevo QR
-            }
+    async function loadQR() {
+      clearInterval(countdownInterval);
+      const box = document.getElementById("qrBox");
+      box.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+      try {
+        const data = await apiFetch("/api/user/dashboard");
+        let remaining = data.qr_expiration;
+        box.innerHTML = `
+          <p class="text-muted mb-2">Muestra este código al administrador</p>
+          <img src="data:image/png;base64,${data.qr_img}" class="qr-image" alt="QR Code" />
+          <p class="mt-3 mb-0">Expira en: <span class="countdown" id="countdown">${remaining}s</span></p>`;
+        countdownInterval = setInterval(() => {
+          remaining--;
+          const el = document.getElementById("countdown");
+          if (el) el.textContent = `${remaining}s`;
+          if (remaining <= 0) { clearInterval(countdownInterval); loadQR(); }
         }, 1000);
+      } catch (err) {
+        if (err.status === 401) return logout();
+        document.getElementById("alert").textContent = err.message;
+        document.getElementById("alert").classList.remove("d-none");
+      }
+    }
 
-        // Prevenir que el usuario cierre la página accidentalmente
-        window.addEventListener('beforeunload', function(e) {
-            if (timeLeft > 0 && timeLeft < {{ QR_EXPIRATION }}) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-    });
-</script>
-{% endblock %}
+    document.getElementById("refreshBtn").addEventListener("click", loadQR);
+    loadQR();
+  </script>
+</body>
+</html>
