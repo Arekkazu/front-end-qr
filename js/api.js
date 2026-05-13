@@ -19,11 +19,15 @@ function getUser() {
 
 function requireAuth(role) {
   const user = getUser();
-  if (!user || !localStorage.getItem("token")) {
+  const token = localStorage.getItem("token");
+  console.log("[requireAuth] user=", user, "token=", token, "required role=", role);
+  if (!user || !token) {
+    console.log("[requireAuth] no user/token → logout");
     window.location.href = "/index.html";
     return false;
   }
   if (role && user.role !== role) {
+    console.log("[requireAuth] role mismatch:", user.role, "!=", role);
     window.location.href = user.role === "Admin" ? "/admin/dashboard.html" : "/user/dashboard.html";
     return false;
   }
