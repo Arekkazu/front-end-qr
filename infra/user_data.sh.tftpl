@@ -2,7 +2,7 @@
 set -eux
 
 dnf update -y
-dnf install -y git nginx
+dnf install -y git nginx openssl
 
 REPO_URL="${repo_url}"
 REPO_BRANCH="${repo_branch}"
@@ -19,21 +19,36 @@ else
   git pull origin "$REPO_BRANCH"
 fi
 
-# Copiar archivos estáticos al directorio de Nginx
+# Copiar archivos estáticos
 rm -rf "$WEB_ROOT"/*
 cp -r /opt/front-end-qr/index.html /opt/front-end-qr/js /opt/front-end-qr/user /opt/front-end-qr/admin "$WEB_ROOT"/
 
-# Inyectar la URL del backend en un archivo de configuración JS
+# Inyectar URL del backend
 cat > "$WEB_ROOT/js/config.js" <<EOF
 window.API_BASE = "$API_BASE";
 EOF
 
-# Configurar Nginx: servir SPA con fallback a index.html
+# Generar certificado autofirmado
+mkdir -p /etc/nginx/ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/nginx/ssl/nginx.key \
+  -out /etc/nginx/ssl/nginx.crt \
+  -subj "/C=CO/ST=Local/L=Local/O=QRFlask/CN=qr-frontend"
+
+# Configurar Nginx con HTTP→HTTPS redirect + SSL
 cat > /etc/nginx/conf.d/qr-frontend.conf <<'NGINX'
 server {
     listen 80;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
     root /usr/share/nginx/html;
     index index.html;
+
+    ssl_certificate     /etc/nginx/ssl/nginx.crt;
+    ssl_certificate_key /etc/nginx/ssl/nginx.key;
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -46,7 +61,6 @@ server {
 }
 NGINX
 
-# Deshabilitar el server block por defecto
 rm -f /etc/nginx/conf.d/default.conf
 
 systemctl enable nginx
