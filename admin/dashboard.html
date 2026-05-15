@@ -122,22 +122,22 @@
         </tr>`).join("");
     }
 
-    function openEdit(id, username, role) {
+    window.openEdit = function(id, username, role) {
       document.getElementById("editId").value = id;
       document.getElementById("editUsername").value = username;
       document.getElementById("editRole").value = role;
       document.getElementById("editPassword").value = "";
       new bootstrap.Modal(document.getElementById("editModal")).show();
-    }
+    };
 
-    async function deleteUser(id) {
+    window.deleteUser = async function(id) {
       if (!confirm("¿Eliminar este usuario?")) return;
       try {
         await apiFetch(`/api/admin/users/${id}`, { method: "DELETE" });
         showAlert("Usuario eliminado", "success");
         loadUsers();
       } catch (err) { showAlert(err.message); }
-    }
+    };
 
     document.getElementById("addForm").addEventListener("submit", async (e) => {
       e.preventDefault();
