@@ -7,7 +7,7 @@ output "public_ip" {
 }
 
 output "frontend_url" {
-  value = "https://${aws_instance.frontend.public_ip}"
+  value = "http://${aws_instance.frontend.public_ip}"
 }
 
 output "ssh_command" {

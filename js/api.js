@@ -1,5 +1,5 @@
 // Cambia esta URL por la IP pública del backend cuando esté desplegado
-const API_BASE = window.API_BASE || "http://localhost:5000";
+const API_BASE = window.API_BASE || "http://44.195.79.178:5000";
 
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem("token");
