@@ -58,6 +58,21 @@
     </div>
   </main>
 
+  <!-- Panel de logs de asistencia -->
+  <section class="container py-2">
+    <div class="card shadow border-0">
+      <div class="card-body">
+        <h5 class="mb-3"><i class="fas fa-list me-2"></i>Registro de Asistencias (Logs recientes)</h5>
+        <div id="logsContainer" style="max-height:300px; overflow:auto;">
+          <ul id="logsList" class="list-group list-group-flush"></ul>
+        </div>
+        <div class="mt-3 text-end">
+          <button id="clearLogs" class="btn btn-sm btn-outline-danger">Limpiar logs</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="/js/config.js"></script>
   <script src="/js/api.js"></script>
@@ -81,6 +96,14 @@
           body: JSON.stringify({ qr_token: token }),
         });
         showAlert(data.message, "success");
+        // Agregar entrada al log y persistir localmente
+        const entry = {
+          ts: new Date().toISOString(),
+          message: data.message || "Asistencia registrada",
+          user: data.user ? data.user.username : null,
+          attendance: data.attendance || null,
+        };
+        addLogEntry(entry);
       } catch (err) {
         if (err.status === 401) return logout();
         showAlert(err.message);
@@ -149,6 +172,109 @@
       await registerAttendance(document.getElementById("qrToken").value.trim());
       document.getElementById("qrToken").value = "";
     });
+
+    // Logs: persistencia simple en localStorage
+    const LOG_KEY = "attendanceLogs:v1";
+
+    function loadLogs() {
+      try {
+        const raw = localStorage.getItem(LOG_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function saveLogs(list) {
+      try {
+        localStorage.setItem(LOG_KEY, JSON.stringify(list.slice(0, 200)));
+      } catch (_) {}
+    }
+
+    function formatTs(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString();
+      } catch (_) {
+        return iso;
+      }
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('logsList');
+      container.innerHTML = '';
+      const logs = loadLogs();
+      if (!logs.length) {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = 'No hay registros aún.';
+        container.appendChild(li);
+        return;
+      }
+      logs.slice().reverse().forEach((l) => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-start';
+        const left = document.createElement('div');
+        left.innerHTML = `<div><strong>${l.user || 'Anónimo'}</strong></div><div class="small text-muted">${l.message}</div>`;
+        const right = document.createElement('div');
+        right.className = 'small text-muted text-end';
+        right.textContent = formatTs(l.ts);
+        li.appendChild(left);
+        li.appendChild(right);
+        container.appendChild(li);
+      });
+    }
+
+    function addLogEntry(entry) {
+      const logs = loadLogs();
+      logs.push(entry);
+      saveLogs(logs);
+      renderLogs();
+    }
+
+    document.getElementById('clearLogs').addEventListener('click', () => {
+      if (!confirm('Limpiar todos los logs de asistencia en este navegador?')) return;
+      localStorage.removeItem(LOG_KEY);
+      renderLogs();
+    });
+
+    // Render inicial de logs
+    renderLogs();
+
+    // Cargar logs desde el servidor (deploy)
+    async function loadServerLogs() {
+      try {
+        const server = await apiFetch('/api/admin/scanner');
+        if (Array.isArray(server)) {
+          // Cada item: { attendance: {...}, user: {...} }
+          const mapped = server.map((s) => ({
+            ts: s.attendance && s.attendance.timestamp ? s.attendance.timestamp : new Date().toISOString(),
+            message: s.user ? `Asistencia registrada para ${s.user.username}` : 'Asistencia registrada',
+            user: s.user ? s.user.username : null,
+            attendance: s.attendance || null,
+          }));
+
+          // Merge: append server logs to local storage but avoid duplicating by attendance id
+          const existing = loadLogs();
+          const existingIds = new Set(existing.map((e) => (e.attendance && e.attendance.id) || null));
+          const merged = existing.slice();
+          mapped.forEach((m) => {
+            const aid = m.attendance && m.attendance.id;
+            if (aid && !existingIds.has(aid)) {
+              merged.push(m);
+            }
+          });
+          saveLogs(merged);
+          renderLogs();
+        }
+      } catch (err) {
+        // no bloquear si falla (por permisos o CORS)
+        console.warn('No se pudieron cargar logs del servidor:', err);
+      }
+    }
+
+    // Intentar cargar logs del servidor al iniciar
+    loadServerLogs();
     }); // DOMContentLoaded
   </script>
 </body>
