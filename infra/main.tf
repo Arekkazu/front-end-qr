@@ -88,5 +88,7 @@ resource "aws_instance" "frontend" {
     api_base_url = var.api_base_url
   })
 
+  user_data_replace_on_change = true
+
   tags = { Name = "${var.project_name}-ec2" }
 }
