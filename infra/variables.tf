@@ -37,6 +37,6 @@ variable "repo_branch" {
 }
 
 variable "api_base_url" {
-  description = "URL pública del backend (http://<ip-backend>:5000)"
+  description = "URL pública del backend (http://<ip-backend>)"
   type        = string
 }

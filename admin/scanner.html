@@ -30,6 +30,10 @@
             <button class="btn btn-secondary mt-3 d-none" id="stopBtn">
               <i class="fas fa-stop me-2"></i>Detener
             </button>
+            <button class="btn btn-outline-secondary mt-3 d-none" id="uploadBtn">
+              <i class="fas fa-upload me-2"></i>Subir imagen
+            </button>
+            <input type="file" id="fileInput" accept="image/*" class="d-none" />
           </div>
         </div>
       </div>
@@ -83,28 +87,60 @@
       }
     }
 
-    // Escáner de cámara
+    // Escáner de cámara con fallback a subida de imagen
     let scanner = null;
-    document.getElementById("startBtn").addEventListener("click", () => {
-      scanner = new Html5Qrcode("reader");
-      scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          scanner.stop();
-          document.getElementById("startBtn").classList.remove("d-none");
-          document.getElementById("stopBtn").classList.add("d-none");
-          registerAttendance(decodedText);
-        }
-      );
-      document.getElementById("startBtn").classList.add("d-none");
-      document.getElementById("stopBtn").classList.remove("d-none");
-    });
 
-    document.getElementById("stopBtn").addEventListener("click", () => {
-      if (scanner) scanner.stop();
+    async function startCamera() {
+      try {
+        if (!window.isSecureContext && location.hostname !== 'localhost') {
+          throw new Error('Contexto inseguro');
+        }
+        scanner = new Html5Qrcode("reader");
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          (decodedText) => {
+            scanner.stop();
+            document.getElementById("startBtn").classList.remove("d-none");
+            document.getElementById("stopBtn").classList.add("d-none");
+            registerAttendance(decodedText);
+          }
+        );
+        document.getElementById("startBtn").classList.add("d-none");
+        document.getElementById("stopBtn").classList.remove("d-none");
+        document.getElementById("uploadBtn").classList.add("d-none");
+      } catch (err) {
+        // Fallback: mostrar opción para subir imagen y explicar el motivo
+        showAlert('La cámara no está disponible en este navegador/entorno. Puedes subir una imagen con el QR o accede por HTTPS/localhost.', 'warning');
+        document.getElementById("uploadBtn").classList.remove("d-none");
+      }
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => startCamera());
+
+    document.getElementById("stopBtn").addEventListener("click", async () => {
+      if (scanner) {
+        try { await scanner.stop(); } catch (_) {}
+      }
       document.getElementById("startBtn").classList.remove("d-none");
       document.getElementById("stopBtn").classList.add("d-none");
+    });
+
+    // Subida de imagen como fallback
+    const fileInput = document.getElementById('fileInput');
+    document.getElementById('uploadBtn').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        scanner = scanner || new Html5Qrcode('reader');
+        const decoded = await scanner.scanFile(file, true);
+        registerAttendance(decoded);
+      } catch (err) {
+        showAlert('No se pudo leer el QR de la imagen: ' + (err && err.message ? err.message : err));
+      } finally {
+        fileInput.value = '';
+      }
     });
 
     // Ingreso manual
