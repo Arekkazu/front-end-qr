@@ -28,10 +28,23 @@ cat > "$WEB_ROOT/js/config.js" <<EOF
 window.API_BASE = "$API_BASE";
 EOF
 
-# Configurar Nginx para servir HTTP
+# Generar certificado auto-firmado para HTTPS
+mkdir -p /etc/nginx/ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/nginx/ssl/nginx-selfsigned.key \
+  -out /etc/nginx/ssl/nginx-selfsigned.crt \
+  -subj "/C=US/ST=State/L=City/O=Organization/OU=Org/CN=localhost"
+
+# Configurar Nginx para servir HTTP y HTTPS
 cat > /etc/nginx/conf.d/qr-frontend.conf <<'NGINX'
 server {
     listen 80;
+    listen 443 ssl;
+    server_name _;
+
+    ssl_certificate /etc/nginx/ssl/nginx-selfsigned.crt;
+    ssl_certificate_key /etc/nginx/ssl/nginx-selfsigned.key;
+
     root /usr/share/nginx/html;
     index index.html;
 

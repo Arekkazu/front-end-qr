@@ -53,7 +53,13 @@
         box.innerHTML = `
           <p class="text-muted mb-2">Muestra este código al administrador</p>
           <img src="data:image/png;base64,${data.qr_img}" class="qr-image" alt="QR Code" />
-          <p class="mt-3 mb-0">Expira en: <span class="countdown" id="countdown">${remaining}s</span></p>`;
+          <p class="mt-3 mb-0">Expira en: <span class="countdown" id="countdown">${remaining}s</span></p>
+          <div class="input-group mt-3">
+            <input type="text" class="form-control text-center text-muted form-control-sm" value="${data.qr_token}" readonly id="tokenInput">
+            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="copyToken()" title="Copiar Token">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>`;
         countdownInterval = setInterval(() => {
           remaining--;
           const el = document.getElementById("countdown");
@@ -66,6 +72,18 @@
         document.getElementById("alert").classList.remove("d-none");
       }
     }
+
+    window.copyToken = function() {
+      const input = document.getElementById("tokenInput");
+      input.select();
+      input.setSelectionRange(0, 99999); // Para móviles
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        const icon = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+        setTimeout(() => btn.innerHTML = icon, 2000);
+      });
+    };
 
     document.getElementById("refreshBtn").addEventListener("click", loadQR);
     loadQR();

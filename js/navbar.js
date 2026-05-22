@@ -10,6 +10,11 @@ function renderNavbar(activePage) {
       </a>
     </li>
     <li class="nav-item">
+      <a class="nav-link ${activePage === 'admin-logs' ? 'active' : ''}" href="/admin/logs.html">
+        <i class="fas fa-clipboard-list me-1"></i>Logs de Asistencia
+      </a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link ${activePage === 'scanner' ? 'active' : ''}" href="/admin/scanner.html">
         <i class="fas fa-camera me-1"></i>Registrar Asistencia
       </a>
